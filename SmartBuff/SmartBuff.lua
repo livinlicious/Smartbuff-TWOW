@@ -33,6 +33,7 @@ local maxRaid = 40;
 local maxBuffs = 32;
 local maxCheckButtons = 28;
 local numBuffs = 0;
+local uiSlotToBuffIdx = {}; -- Maps UI slot index to cBuffs index for correct checkbox handling
 
 
 local isLoaded = false;
@@ -2641,15 +2642,17 @@ function SMARTBUFF_OSelfFirst()
 end
 
 function SMARTBUFF_OToggleBuff(s, i)
-  local name = cBuffs[i].BuffS;  
+  -- Map UI slot index to actual cBuffs index
+  local buffIdx = uiSlotToBuffIdx[i] or i;
+  local name = cBuffs[buffIdx].BuffS;
   if (name == nil) then
     return;
   end
-  
+
   if (s == "S") then
     SMARTBUFF_Buffs[currentTemplate][name].EnableS = not SMARTBUFF_Buffs[currentTemplate][name].EnableS;
     if (SMARTBUFF_Buffs[currentTemplate][name].EnableS) then
-      SmartBuff_BuffSetup_Show(i);
+      SmartBuff_BuffSetup_Show(buffIdx);
     else
       SmartBuff_BuffSetup:Hide();
       iLastBuffSetup = -1;
@@ -2657,7 +2660,7 @@ function SMARTBUFF_OToggleBuff(s, i)
   elseif (s == "G") then
     SMARTBUFF_Buffs[currentTemplate][name].EnableG = not SMARTBUFF_Buffs[currentTemplate][name].EnableG;
   end
-  
+
 end
 
 function SMARTBUFF_OToggleDebug()
@@ -2979,6 +2982,9 @@ function SMARTBUFF_SetCheckButtonBuffs()
 
 	SMARTBUFF_SetBuffs();
 
+	-- Clear the mapping table
+	uiSlotToBuffIdx = {};
+
 	-- First pass: show visible buffs in sequential UI slots
 	while (buffIdx <= maxCheckButtons and cBuffs[buffIdx]) do
     -- Check if this buff should be shown in the menu
@@ -2996,6 +3002,9 @@ function SMARTBUFF_SetCheckButtonBuffs()
     if (shouldShow) then
       objS = getglobal("SmartBuffOptionsFrame_cbBuffS"..uiSlot);
       objG = getglobal("SmartBuffOptionsFrame_cbBuffG"..uiSlot);
+
+      -- Store the mapping from UI slot to cBuffs index
+      uiSlotToBuffIdx[uiSlot] = buffIdx;
 
 	    if (cBuffs[buffIdx].IDG ~= nil and objG ~= nil) then
 	      getglobal(objS:GetName().."Text"):SetText("");
