@@ -829,12 +829,17 @@ function SMARTBUFF_SetBuff(buff, i)
   end
 
   -- Fix existing weapon buffs that have MH=false from old saved variables
+  -- IMPORTANT: Fix ALL templates, not just current template
   if (cBuffs[i].Type == SMARTBUFF_CONST_INV or cBuffs[i].Type == SMARTBUFF_CONST_WEAPON) then
-    if (SMARTBUFF_Buffs[ct][name].MH == nil or SMARTBUFF_Buffs[ct][name].MH == false) then
-      SMARTBUFF_Buffs[ct][name].MH = true;
-    end
-    if (SMARTBUFF_Buffs[ct][name].OH == nil) then
-      SMARTBUFF_Buffs[ct][name].OH = false;
+    for _, template in SMARTBUFF_TEMPLATES do
+      if (SMARTBUFF_Buffs[template] and SMARTBUFF_Buffs[template][name]) then
+        if (SMARTBUFF_Buffs[template][name].MH == nil or SMARTBUFF_Buffs[template][name].MH == false) then
+          SMARTBUFF_Buffs[template][name].MH = true;
+        end
+        if (SMARTBUFF_Buffs[template][name].OH == nil) then
+          SMARTBUFF_Buffs[template][name].OH = false;
+        end
+      end
     end
   end
 
@@ -1311,7 +1316,8 @@ function SMARTBUFF_BuffUnit(unit, subgroup, mode)
                     if (SMARTBUFF_Buffs[ct][cBuffs[checkIdx].BuffS] and SMARTBUFF_Buffs[ct][cBuffs[checkIdx].BuffS].EnableS) then
                       -- Check if this buff is needed on the player
                       -- CheckUnitBuffs returns: buff IS active = nil, buff MISSING = buffname
-                      local missingBuff, _, _ = SMARTBUFF_CheckUnitBuffs(unit, cBuffs[checkIdx].BuffS, cBuffs[checkIdx].IconS, nil, nil);
+                      -- IMPORTANT: Also check group buff (BuffG) to handle Gift of the Wild, etc.
+                      local missingBuff, _, _ = SMARTBUFF_CheckUnitBuffs(unit, cBuffs[checkIdx].BuffS, cBuffs[checkIdx].IconS, cBuffs[checkIdx].BuffG, cBuffs[checkIdx].IconG);
                       if (missingBuff ~= nil) then
                         -- This higher priority buff is MISSING, so skip weapon buff
                         hasHigherPriorityBuffNeeded = true;
